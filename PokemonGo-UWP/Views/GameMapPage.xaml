@@ -225,6 +225,8 @@
     </Page.Resources>
 
     <RelativePanel>
+      <CaptureElement x:Name="arCamera" Stretch="UniformToFill" Canvas.ZIndex="1"/>
+      <Image x:Name="arRender" Stretch="Uniform" HorizontalAlignment="Stretch" Canvas.ZIndex="2" Width="{Binding Width, ElementName=arRender}" Height="{Binding Height, ElementName=arRender}" />
 
         <maps:MapControl BusinessLandmarksVisible="False"
                          LandmarksVisible="False"
@@ -733,8 +735,21 @@
             </Border>
 
         </Grid>
+    <Button
+            Style="{ThemeResource ImageButtonStyle}"
+            Height="{ThemeResource UiButtonSize}"
+            HorizontalAlignment="Right"
+            x:Name="ARToggleButton" Margin="0,10,-350,-10" VerticalAlignment="Top" Canvas.ZIndex="100" Width="{StaticResource UiButtonSize}">
+      <Image x:Name="arStateImage" Source="../Assets/Buttons/btn_ar_toggle_off.png" Stretch="Uniform" HorizontalAlignment="Stretch" />
 
-        <Button
+      <interactivity:Interaction.Behaviors>
+        <core:EventTriggerBehavior EventName="Click">
+          <core:CallMethodAction MethodName="ToggleARMode" TargetObject="{Binding ElementName=GamePage, Mode=OneWay}"/>
+        </core:EventTriggerBehavior>
+      </interactivity:Interaction.Behaviors>
+    </Button>
+
+    <Button
 				x:Name="ReactivateMapAutoUpdate" 
 				Canvas.ZIndex="1"
 				Style="{ThemeResource ImageButtonStyle}"

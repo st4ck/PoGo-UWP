@@ -9,7 +9,10 @@ using Windows.UI.Xaml.Navigation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PokemonGo.RocketAPI;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Media;
 using PokemonGo_UWP.Utils;
+using Windows.Devices.Sensors;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -37,6 +40,15 @@ namespace PokemonGo_UWP.Views
                 HideNearbyModalAnimation.Completed += (ss, ee) => { NearbyPokemonModal.IsModal = false; };
 
                 ReactivateMapAutoUpdate.Visibility = Visibility.Collapsed;
+                arStateImage.Source = imageAROff;
+                if (arManager == null)
+                {
+                  arManager = new Utils.ARManager((int)arCamera.ActualWidth, (int)arCamera.ActualHeight, false);
+                  arManager.Initialize(arCamera);
+                  arRender.Source = arManager;
+                  arCamera.Visibility = Visibility.Collapsed;
+                  arRender.Visibility = Visibility.Collapsed;
+                }
             };
         }
 
@@ -109,6 +121,7 @@ namespace PokemonGo_UWP.Views
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            if (arManager != null) arManager.Initialize(arCamera);
             base.OnNavigatedTo(e);
             // Hide PokeMenu panel just in case
             HidePokeMenuStoryboard.Begin();
@@ -130,6 +143,7 @@ namespace PokemonGo_UWP.Views
 
         private void OnBackRequested(object sender, BackRequestedEventArgs backRequestedEventArgs)
         {
+            if (arManager != null) arManager.Deinitialize();
             if (!(PokeMenuPanel.Opacity > 0)) return;
             backRequestedEventArgs.Handled = true;
             HidePokeMenuStoryboard.Begin();
@@ -137,6 +151,7 @@ namespace PokemonGo_UWP.Views
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
+            if (arManager != null) arManager.Deinitialize();
             base.OnNavigatingFrom(e);
             UnsubscribeToCaptureEvents();
             SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
@@ -243,6 +258,65 @@ namespace PokemonGo_UWP.Views
             ShowLevelUpPanelStoryboard.Begin();
         }
 
-        #endregion
+    #endregion
+
+    #region Augmented Reality
+
+    public BitmapImage imageAROff = new BitmapImage(new Uri("ms-appx:///Assets/Buttons/btn_ar_toggle_off.png", UriKind.RelativeOrAbsolute));
+    public BitmapImage imageAROn = new BitmapImage(new Uri("ms-appx:///Assets/Buttons/btn_ar_toggle_on.png", UriKind.RelativeOrAbsolute));
+    public BitmapImage imageAROk = new BitmapImage(new Uri("ms-appx:///Assets/Buttons/btn_ar_toggle_accurate.png", UriKind.RelativeOrAbsolute));
+    public BitmapImage imageARBad = new BitmapImage(new Uri("ms-appx:///Assets/Buttons/btn_ar_toggle_inaccurate.png", UriKind.RelativeOrAbsolute));
+    private ARManager arManager = null;
+
+    public void ToggleARMode(object sender, RoutedEventArgs e)
+    {
+      if (arStateImage.Source == imageAROff)
+      {
+        CompositionTarget.Rendering += Render;
+        arManager.compass.Accuracy += AccuracyChanged;
+        GameMapControl.Visibility = Visibility.Collapsed;
+        arCamera.Visibility = Visibility.Visible;
+        arRender.Visibility = Visibility.Visible;
+        arManager.BeginVideoStream();
+        arStateImage.Source = imageARBad;
+      }
+      else
+      {
+        CompositionTarget.Rendering -= Render;
+        arManager.compass.Accuracy -= AccuracyChanged;
+        GameMapControl.Visibility = Visibility.Visible;
+        arCamera.Visibility = Visibility.Collapsed;
+        arRender.Visibility = Visibility.Collapsed;
+        arManager.StopVideoStream();
+        arStateImage.Source = imageAROff;
+      }
     }
+
+    private MagnetometerAccuracy curAcc;
+    private MagnetometerAccuracy newAcc;
+
+    private void AccuracyChanged(object sender, AccuracyReading e)
+    {
+      newAcc = e.Accuracy;
+    }
+
+    private void Render(object sender, object e)
+    {
+      // This foolishness is because the events come in on the wrong thread.
+      if (curAcc != newAcc)
+      {
+        if (newAcc == MagnetometerAccuracy.High)
+          arStateImage.Source = imageAROn;
+        else if (newAcc == MagnetometerAccuracy.Approximate)
+          arStateImage.Source = imageAROk;
+        else
+          arStateImage.Source = imageARBad;
+        curAcc = newAcc;
+      }
+
+      arManager.Render();
+    }
+    #endregion
+
+  }
 }

@@ -262,6 +262,9 @@
     <Content Include="Assets\LiveTiles\Transparent\Square71x71Logo.scale-400.png" />
     <Content Include="Assets\LiveTiles\Transparent\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\LiveTiles\Transparent\Wide310x150Logo.scale-400.png" />
+    <Content Include="Assets\Pokemons\pokestop.png" />
+    <Content Include="Assets\Shaders\PixelShader.ps.hlsl" />
+    <Content Include="Assets\Shaders\VertexShader.vs.hlsl" />
     <Content Include="Assets\UI\night_sky_texture_by_amdillon.jpg" />
     <Content Include="Assets\Pokemons\1.png" />
     <Content Include="Assets\Pokemons\10.png" />
@@ -583,6 +586,8 @@
     <Compile Include="Utils\Achievements\GoldAttribute.cs" />
     <Compile Include="Utils\Achievements\AchievementType.cs" />
     <Compile Include="Utils\ApplicationKeys.cs" />
+    <Compile Include="Utils\ARManager.cs" />
+    <Compile Include="Utils\CompassHelper.cs" />
     <Compile Include="Utils\Game\FortDataStatus.cs" />
     <Compile Include="Utils\Helpers\AsyncSynchronisationContext.cs" />
     <Compile Include="Utils\Helpers\AudioUtils.cs" />
