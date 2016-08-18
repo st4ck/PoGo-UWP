@@ -738,14 +738,14 @@ namespace PokemonGo_UWP.Utils
     {
       var cubeVertices = new[]
       {
-        new VertexPositionTex(new Vector3(-5.0f, -0.01f, -5.0f), new Vector2(0.0f, 0.0f)),
-        new VertexPositionTex(new Vector3(-5.0f, -0.01f,  5.0f), new Vector2(0.0f, 1.0f)),
-        new VertexPositionTex(new Vector3(-5.0f,  0.01f, -5.0f), new Vector2(0.0f, 0.0f)),
-        new VertexPositionTex(new Vector3(-5.0f,  0.01f,  5.0f), new Vector2(0.0f, 1.0f)),
-        new VertexPositionTex(new Vector3( 5.0f, -0.01f, -5.0f), new Vector2(1.0f, 0.0f)),
-        new VertexPositionTex(new Vector3( 5.0f, -0.01f,  5.0f), new Vector2(1.0f, 1.0f)),
-        new VertexPositionTex(new Vector3( 5.0f,  0.01f, -5.0f), new Vector2(1.0f, 0.0f)),
-        new VertexPositionTex(new Vector3( 5.0f,  0.01f,  5.0f), new Vector2(1.0f, 1.0f)),
+        new VertexPositionTex(new Vector3(-5.0f, -0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
+        new VertexPositionTex(new Vector3(-5.0f, -0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
+        new VertexPositionTex(new Vector3(-5.0f,  0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
+        new VertexPositionTex(new Vector3(-5.0f,  0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
+        new VertexPositionTex(new Vector3( 5.0f, -0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
+        new VertexPositionTex(new Vector3( 5.0f, -0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
+        new VertexPositionTex(new Vector3( 5.0f,  0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
+        new VertexPositionTex(new Vector3( 5.0f,  0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
       };
 
       var cubeVertices2 = new[]
@@ -788,7 +788,7 @@ namespace PokemonGo_UWP.Utils
       renderMan.CreateTexture("texPokemon2", "mainTexture", "\\Assets\\Pokemons\\19.png");
       renderMan.CreateTexture("texPokemon3", "mainTexture", "\\Assets\\Pokemons\\10.png");
       renderMan.CreateTexture("pokestop", "mainTexture", "\\Assets\\Pokemons\\pokestop.png");
-      renderMan.CreateTexture("texFloor", "mainTexture", "\\Assets\\Backgrounds\\details_type_bg_ground.png");
+      renderMan.CreateTexture("texFloor", "mainTexture", "\\Assets\\UI\\compass.png");
     }
 
     private void dxInitScene()

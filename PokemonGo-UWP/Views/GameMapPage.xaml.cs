@@ -33,22 +33,22 @@ namespace PokemonGo_UWP.Views
             NavigationCacheMode = NavigationCacheMode.Enabled;
 
             // Setup nearby translation + map
-            Loaded += (s, e) =>
+            Loaded += async (s, e) =>
             {
-                ShowNearbyModalAnimation.From =
-                    HideNearbyModalAnimation.To = NearbyPokemonModal.ActualHeight;
-                HideNearbyModalAnimation.Completed += (ss, ee) => { NearbyPokemonModal.IsModal = false; };
+              ShowNearbyModalAnimation.From =
+                  HideNearbyModalAnimation.To = NearbyPokemonModal.ActualHeight;
+              HideNearbyModalAnimation.Completed += (ss, ee) => { NearbyPokemonModal.IsModal = false; };
 
-                ReactivateMapAutoUpdate.Visibility = Visibility.Collapsed;
-                arStateImage.Source = imageAROff;
-                if (arManager == null)
-                {
-                  arManager = new Utils.ARManager((int)arCamera.ActualWidth, (int)arCamera.ActualHeight, false);
-                  arManager.Initialize(arCamera);
-                  arRender.Source = arManager;
-                  arCamera.Visibility = Visibility.Collapsed;
-                  arRender.Visibility = Visibility.Collapsed;
-                }
+              ReactivateMapAutoUpdate.Visibility = Visibility.Collapsed;
+              arStateImage.Source = imageAROff;
+              if (arManager == null)
+              {
+                arManager = new Utils.ARManager((int)arCamera.ActualWidth, (int)arCamera.ActualHeight, false);
+                await arManager.Initialize(arCamera);
+                arRender.Source = arManager;
+                arCamera.Visibility = Visibility.Collapsed;
+                arRender.Visibility = Visibility.Collapsed;
+              }
             };
         }
 
