@@ -26,6 +26,7 @@ using FeatureLevel = SharpDX.Direct3D.FeatureLevel;
 using InputElement = SharpDX.Direct3D11.InputElement;
 using Utilities = SharpDX.Utilities;
 using PokemonGo_UWP.Entities;
+using System.Threading;
 
 namespace PokemonGo_UWP.Utils
 {
@@ -627,17 +628,37 @@ namespace PokemonGo_UWP.Utils
 
     public async Task Initialize(CaptureElement element)
     {
-      await initGeo();
       await initVideo(element);
+      initGeo();
       initDX();
     }
 
-    private async Task initGeo()
+    #region Geo Position
+    Timer geoTimer;
+    private void initGeo()
     {
-      Geoposition pos = await geo.GetGeopositionAsync();
-      playerPos = pos.Coordinate.Point;
+      geoTimer = new Timer(onGeoTimer, null, 0, Timeout.Infinite);
     }
 
+    private void BeginGeo()
+    {
+      if (mIsActive) geoTimer.Change(1000, Timeout.Infinite);
+    }
+
+    private async void onGeoTimer(Object state)
+    {
+      try
+      {
+        Geoposition pos = await geo.GetGeopositionAsync();
+        playerPos = pos.Coordinate.Point;
+        PokemonGo.RocketAPI.Logger.Write($"player at {playerPos.Position.Latitude} {playerPos.Position.Longitude}");
+      }
+      catch { }
+      BeginGeo();
+    }
+    #endregion
+
+    #region Camera Stream
     private async Task initVideo(CaptureElement element)
     {
       // already inited?
@@ -681,6 +702,8 @@ namespace PokemonGo_UWP.Utils
       mElement.Source = mMediaCapture;
       await mMediaCapture.StartPreviewAsync();
       mIsActive = true;
+      compass.Reset = true;
+      BeginGeo();
     }
 
     public async Task StopVideoStream()
@@ -689,7 +712,9 @@ namespace PokemonGo_UWP.Utils
       if (mIsActive) await mMediaCapture.StopPreviewAsync();
       mIsActive = false;
     }
+    #endregion
 
+    #region DirectX
     public void initDX()
     {
       dxCreateDevice();
@@ -738,14 +763,14 @@ namespace PokemonGo_UWP.Utils
     {
       var cubeVertices = new[]
       {
-        new VertexPositionTex(new Vector3(-5.0f, -0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
-        new VertexPositionTex(new Vector3(-5.0f, -0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
-        new VertexPositionTex(new Vector3(-5.0f,  0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
-        new VertexPositionTex(new Vector3(-5.0f,  0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
-        new VertexPositionTex(new Vector3( 5.0f, -0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
-        new VertexPositionTex(new Vector3( 5.0f, -0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
-        new VertexPositionTex(new Vector3( 5.0f,  0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
-        new VertexPositionTex(new Vector3( 5.0f,  0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
+        new VertexPositionTex(new Vector3(-5.0f, -0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
+        new VertexPositionTex(new Vector3(-5.0f, -0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
+        new VertexPositionTex(new Vector3(-5.0f,  0.01f, -5.0f), new Vector2(1.0f, 1.0f)),
+        new VertexPositionTex(new Vector3(-5.0f,  0.01f,  5.0f), new Vector2(1.0f, 0.0f)),
+        new VertexPositionTex(new Vector3( 5.0f, -0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
+        new VertexPositionTex(new Vector3( 5.0f, -0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
+        new VertexPositionTex(new Vector3( 5.0f,  0.01f, -5.0f), new Vector2(0.0f, 1.0f)),
+        new VertexPositionTex(new Vector3( 5.0f,  0.01f,  5.0f), new Vector2(0.0f, 0.0f)),
       };
 
       var cubeVertices2 = new[]
@@ -816,6 +841,20 @@ namespace PokemonGo_UWP.Utils
       CreatePokemon("pokestop", new Vector3( 7.0f, 0.0f,  0.0f), 10.0f);
     }
 
+    public void Render()
+    {
+      if (mIsActive == false) return;
+      if (renderMan.dxDevice == null) return;
+
+      Update();
+      renderMan.StartFrame();
+      RenderFrame();
+      renderMan.EndFrame();
+    }
+    #endregion
+
+    #region Frame Updating
+
     private ulong fixedid = 1;
     public void CreatePokemon(String pname, Vector3 pos, float scale)
     {
@@ -832,6 +871,8 @@ namespace PokemonGo_UWP.Utils
       mon.instance = guy;
       mon.position = pos;
       mon.scale = scale;
+      mon.geo = null;
+      mon.instance.access<ModelBuffer>().data.model = Matrix.Transpose(Matrix.Multiply(Matrix.Scaling(mon.scale), Matrix.Translation(mon.position)));
       testGuys.Add(mon);
     }
 
@@ -887,41 +928,14 @@ namespace PokemonGo_UWP.Utils
       pokemons[pokemon.EncounterId] = mon;
     }
 
-    public void Render()
-    {
-      if (mIsActive == false) return;
-      if (renderMan.dxDevice == null) return;
-
-      Update();
-      renderMan.StartFrame();
-      RenderFrame();
-      renderMan.EndFrame();
-    }
-
-    private long mLastGeoTime = 0;
-    private async Task GetPos()
-    {
-      long now = DateTime.Now.Ticks;
-      if (now - mLastGeoTime > 5000000)
-      {
-        try
-        {
-          Geoposition pos = await geo.GetGeopositionAsync();
-          playerPos = pos.Coordinate.Point;
-        }
-        catch { }
-        mLastGeoTime = now;
-      }
-    }
-
     private enum GetDistanceType { Long = 1, Lat };
 
     private float GetDistanceTo(Geopoint point, GetDistanceType type)
     {
       double lat1 = (type == GetDistanceType.Long) ? playerPos.Position.Latitude : point.Position.Latitude;
-      double lon1 = (type == GetDistanceType.Lat) ? playerPos.Position.Longitude : point.Position.Longitude;
+      double lon2 = (type == GetDistanceType.Lat) ? playerPos.Position.Longitude : point.Position.Longitude;
       double lat2 = playerPos.Position.Latitude;
-      double lon2 = playerPos.Position.Longitude;
+      double lon1 = playerPos.Position.Longitude;
       double R = 6378.137; // Radius of earth in KM
       double dLat = (lat2 - lat1) * Math.PI / 180;
       double dLon = (lon2 - lon1) * Math.PI / 180;
@@ -935,17 +949,14 @@ namespace PokemonGo_UWP.Utils
     List<string> okids2 = new List<String>();
     Vector3 forward = new Vector3(0.0f, 0.0f, 1.0f);
 
-    private async void Update()
+    private void Update()
     {
-      // use the phones offset from last posistion to move the camera location - TODO
-//      await GetPos();
-
       // update camera
       Matrix3x3 mat = compass.Matrix;
-      Quaternion q = compass.Quat;
-      camera.forward = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), q);
+//      Quaternion q = compass.Quat;
+      camera.forward = Vector3.Transform(new Vector3(0.0f, 0.0f, 1.0f), mat);
       camera.eye = new Vector3(0.0f, 2.0f, 0.0f); // Define camera position.
-      camera.up = Vector3.Transform(new Vector3(0.0f, 1.0f, 0.0f), q); // Define up direction.
+      camera.up = Vector3.Transform(new Vector3(0.0f, 1.0f, 0.0f), mat); // Define up direction.
       camera.target = Vector3.Add(camera.eye, camera.forward); // Define focus position.
       camera.lookat = Matrix.LookAtRH(camera.eye, camera.target, camera.up);
       dataCommon.data.view = Matrix.Transpose(camera.lookat);
@@ -981,16 +992,18 @@ namespace PokemonGo_UWP.Utils
         FixPokething(p);
       foreach (var p in pokestops.Values)
         FixPokething(p);
+      foreach (var p in testGuys)
+        FixPokething(p);
     }
 
     private void FixPokething(arPokemon p)
     {
       // get new offset from geo
-      if (false && p.geo != null)
+      if (p.geo != null)
       {
         p.position.X = GetDistanceTo(p.geo, GetDistanceType.Long);
         p.position.Z = GetDistanceTo(p.geo, GetDistanceType.Lat);
-        PokemonGo.RocketAPI.Logger.Write($"moving p {p.id} at {p.position.X}, {p.position.Z}");
+//        PokemonGo.RocketAPI.Logger.Write($"moving p {p.id} at {p.position.X}, {p.position.Z}");
       }
       // get new orientation to face origin
       Vector3 loc = p.position;
@@ -1001,6 +1014,7 @@ namespace PokemonGo_UWP.Utils
       Matrix scale = Matrix.Scaling(p.scale);
       p.instance.access<ModelBuffer>().data.model = Matrix.Transpose(Matrix.Multiply(Matrix.Multiply(scale, rot), trans));
     }
+    #endregion
 
     private void RenderFrame()
     {
@@ -1011,8 +1025,8 @@ namespace PokemonGo_UWP.Utils
         p.instance.Draw();
       foreach (var p in pokestops.Values)
         p.instance.Draw();
-      foreach (var p in testGuys)
-        p.instance.Draw();
+//      foreach (var p in testGuys)
+//        p.instance.Draw();
     }
   }
 }
