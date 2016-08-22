@@ -471,7 +471,6 @@ namespace PokemonGo_UWP.Utils
     public bool Register(String filename, String name, InputElement[] layout)
     {
       if (renderMan == null) return false;
-      // TODO parse out name, layout as needed
       if (filename.Contains(".vs.hlsl"))
       {
         mxVertexShader shader = new mxVertexShader() { name = name, filename = filename, type = mxShaderType.Vertex };
