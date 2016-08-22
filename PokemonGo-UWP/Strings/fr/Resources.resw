@@ -91,10 +91,13 @@
   <data name="PowerUpButton.Content" xml:space="preserve">
     <value>RECHARGER</value>
   </data>
-  <data name="TransferButton.Content" xml:space="preserve">
-    <value>TRANSFÉRER</value>
-  </data>
-  <data name="SettingsRememberMapZoomTextBlock" xml:space="preserve">
+  <data name="SettingsRememberMapZoomTextBlock.Text" xml:space="preserve">
     <value>Mémoriser le zoom de la carte</value>
+  </data>
+  <data name="EggDetailButtonTextBlock.Text" xml:space="preserve">
+    <value>COMMENCER L'INCUBATION</value>
+  </data>
+  <data name="EggDetailTextBlock.Text" xml:space="preserve">
+    <value>Utilise un incubateur pour incuber un oeuf.</value>
   </data>
 </root>

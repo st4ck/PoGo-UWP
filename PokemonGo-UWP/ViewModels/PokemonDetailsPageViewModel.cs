@@ -15,6 +15,7 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Navigation;
 using Newtonsoft.Json;
+using Google.Protobuf;
 
 namespace PokemonGo_UWP.ViewModels
 {
@@ -62,8 +63,9 @@ namespace PokemonGo_UWP.ViewModels
             if (suspensionState.Any())
             {
                 // Recovering the state
+              
                 CurrentPokemon = JsonConvert.DeserializeObject<PokemonDataWrapper>((string)suspensionState[nameof(CurrentPokemon)]);
-                PlayerProfile = JsonConvert.DeserializeObject<PlayerData>((string)suspensionState[nameof(PlayerProfile)]);
+                PlayerProfile.MergeFrom(ByteString.FromBase64((string)suspensionState[nameof(PlayerProfile)]).CreateCodedInput());
             }
             else
             {
@@ -85,7 +87,7 @@ namespace PokemonGo_UWP.ViewModels
             if (suspending)
             {
                 suspensionState[nameof(CurrentPokemon)] = JsonConvert.SerializeObject(CurrentPokemon);
-                suspensionState[nameof(PlayerProfile)] = JsonConvert.SerializeObject(PlayerProfile);
+                suspensionState[nameof(PlayerProfile)] = PlayerProfile.ToByteString().ToBase64();
             }
             await Task.CompletedTask;
         }
@@ -114,6 +116,11 @@ namespace PokemonGo_UWP.ViewModels
         /// Pokedex data for the current Pokemon
         /// </summary>
         private PokemonSettings _pokemonExtraData;
+
+        /// <summary>
+        /// Current Pokemons favorite status
+        /// </summary>
+        private bool _isFavorite;
 
         /// <summary>
         /// Amount of Stardust owned by the player
@@ -175,7 +182,7 @@ namespace PokemonGo_UWP.ViewModels
         /// <summary>
         /// Id for current pokemon's evolution
         /// </summary>
-        public PokemonId EvolvedPokemonId => CurrentPokemon?.PokemonId + 1 ?? 0;
+        public PokemonId EvolvedPokemonId => EvolvePokemonResponse?.EvolvedPokemonData.PokemonId ?? PokemonId.Missingno;
 
         /// <summary>
         /// Data for the current user
@@ -193,6 +200,15 @@ namespace PokemonGo_UWP.ViewModels
         {
             get { return _pokemonExtraData; }
             set { Set(ref _pokemonExtraData, value); }
+        }
+
+        /// <summary>
+        /// Current Pokemons favorite status
+        /// </summary>
+        public bool IsFavorite
+        {
+            get { return _isFavorite; }
+            set { Set(ref _isFavorite, value); }
         }
 
         /// <summary>
@@ -270,6 +286,7 @@ namespace PokemonGo_UWP.ViewModels
         {
             // Retrieve data
             PlayerProfile = GameClient.PlayerProfile;
+            IsFavorite = Convert.ToBoolean(CurrentPokemon.Favorite);
             StardustAmount = PlayerProfile.Currencies.FirstOrDefault(item => item.Name.Equals("STARDUST")).Amount;
             var upgradeCosts =
                 GameClient.PokemonUpgradeCosts[
@@ -305,7 +322,6 @@ namespace PokemonGo_UWP.ViewModels
           _transferPokemonCommand = new DelegateCommand(async () =>
           {
               // Ask for confirmation before moving the Pokemon
-              // TODO: better style maybe?
               var dialog =
                   new MessageDialog(string.Format(Resources.CodeResources.GetString("TransferPokemonWarningText"),
                       Resources.Pokemon.GetString(CurrentPokemon.PokemonId.ToString())));
@@ -330,7 +346,7 @@ namespace PokemonGo_UWP.ViewModels
                       await GameClient.UpdatePlayerStats();
                       NavigationService.GoBack();
                       break;
-                  // TODO: what to do on error?
+                
                   case ReleasePokemonResponse.Types.Result.PokemonDeployed:
                       break;
                   case ReleasePokemonResponse.Types.Result.Failed:
@@ -340,6 +356,49 @@ namespace PokemonGo_UWP.ViewModels
                   default:
                       throw new ArgumentOutOfRangeException();
               }
+          }, () => true));
+
+        #endregion
+
+        #region Favorite
+
+        private DelegateCommand _favoritePokemonCommand;
+
+        public DelegateCommand FavoritePokemonCommand => _favoritePokemonCommand ?? (
+          _favoritePokemonCommand = new DelegateCommand(async () =>
+          {
+              bool isFavorite = Convert.ToBoolean(CurrentPokemon.Favorite);
+              var pokemonFavoriteResponse = await GameClient.SetFavoritePokemon(CurrentPokemon.Id, !isFavorite);
+              switch (pokemonFavoriteResponse.Result)
+              {
+                  case SetFavoritePokemonResponse.Types.Result.Unset:
+                      break;
+                  case SetFavoritePokemonResponse.Types.Result.Success:
+                      // Inverse favorite state
+                      CurrentPokemon.WrappedData.Favorite = Convert.ToInt32(!isFavorite);
+
+                      IsFavorite = !isFavorite;
+                      break;
+                  
+                  case SetFavoritePokemonResponse.Types.Result.ErrorPokemonNotFound:
+                      break;
+                  case SetFavoritePokemonResponse.Types.Result.ErrorPokemonIsEgg:
+                      break;
+                  default:
+                      throw new ArgumentOutOfRangeException();
+              }
+          }, () => true));
+
+        #endregion
+
+        #region Rename
+
+        private DelegateCommand _renamePokemonCommand;
+
+        public DelegateCommand RenamePokemonCommand => _renamePokemonCommand ?? (
+          _renamePokemonCommand = new DelegateCommand(async () =>
+          {
+              
           }, () => true));
 
         #endregion
@@ -363,7 +422,7 @@ namespace PokemonGo_UWP.ViewModels
                     await GameClient.UpdateProfile();
                     UpdateCurrentData();
                     break;
-                // TODO: do something if we have an error!
+                
                 case UpgradePokemonResponse.Types.Result.ErrorPokemonNotFound:
                     break;
                 case UpgradePokemonResponse.Types.Result.ErrorInsufficientResources:
@@ -391,7 +450,8 @@ namespace PokemonGo_UWP.ViewModels
 
         public DelegateCommand EvolvePokemonCommand => _evolvePokemonCommand ?? (_evolvePokemonCommand = new DelegateCommand(async () =>
         {
-            EvolvePokemonResponse = await GameClient.EvolvePokemon(CurrentPokemon.WrappedData);
+            EvolvePokemonResponse = await GameClient.EvolvePokemon(CurrentPokemon.WrappedData);   
+            RaisePropertyChanged(() => EvolvedPokemonId);         
             switch (EvolvePokemonResponse.Result)
             {
                 case EvolvePokemonResponse.Types.Result.Unset:
@@ -401,7 +461,7 @@ namespace PokemonGo_UWP.ViewModels
                     await GameClient.UpdateInventory();
                     await GameClient.UpdateProfile();
                     break;
-                // TODO: do something if we have an error!
+               
                 case EvolvePokemonResponse.Types.Result.FailedPokemonMissing:
                     break;
                 case EvolvePokemonResponse.Types.Result.FailedInsufficientResources:
@@ -417,7 +477,8 @@ namespace PokemonGo_UWP.ViewModels
 
         private DelegateCommand _replaceEvolvedPokemonCommand;
 
-        public DelegateCommand ReplaceEvolvedPokemonCommand => _replaceEvolvedPokemonCommand ?? (_replaceEvolvedPokemonCommand = new DelegateCommand(() =>
+        public DelegateCommand ReplaceEvolvedPokemonCommand => _replaceEvolvedPokemonCommand ?? (
+            _replaceEvolvedPokemonCommand = new DelegateCommand(() =>
         {
             CurrentPokemon = new PokemonDataWrapper(EvolvePokemonResponse.EvolvedPokemonData);
             UpdateCurrentData();

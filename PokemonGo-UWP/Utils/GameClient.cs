@@ -36,6 +36,9 @@ using Newtonsoft.Json;
 using PokemonGo.RocketAPI.Rpc;
 using PokemonGoAPI.Session;
 using PokemonGo_UWP.Utils.Helpers;
+using System.Collections.Specialized;
+using Windows.UI.Popups;
+using System.ComponentModel;
 
 namespace PokemonGo_UWP.Utils
 {
@@ -82,6 +85,11 @@ namespace PokemonGo_UWP.Utils
                 _isHeartbeating = true;
                 // Heartbeat is alive so we check if we need to update data, based on GameSettings
                 var canRefresh = false;
+
+
+                //Collect location data for signature
+                DeviceInfos.Current.CollectLocationData();
+
                 // We have no settings yet so we just update without further checks
                 if (GameSetting == null)
                 {
@@ -89,7 +97,7 @@ namespace PokemonGo_UWP.Utils
                 }
                 else
                 {
-                    // Check if we need to update                
+                    // Check if we need to update
                     var minSeconds = GameSetting.MapSettings.GetMapObjectsMinRefreshSeconds;
                     var maxSeconds = GameSetting.MapSettings.GetMapObjectsMaxRefreshSeconds;
                     var minDistance = GameSetting.MapSettings.GetMapObjectsMinDistanceMeters;
@@ -114,7 +122,7 @@ namespace PokemonGo_UWP.Utils
                             canRefresh = true;
                         }
                     }
-                } 
+                }
                 // Update!
                 if (!canRefresh)
                 {
@@ -207,13 +215,12 @@ namespace PokemonGo_UWP.Utils
         ///     Collection of Pokemon in 2 steps from current position
         /// </summary>
         public static ObservableCollection<NearbyPokemonWrapper> NearbyPokemons { get; set; } =
-            new ObservableCollection<NearbyPokemonWrapper>
-            {
-                //To prevent errors from NearbyPokemons[0-2].PokemonId in GameMapPage.xaml
-                new NearbyPokemonWrapper(new NearbyPokemon {PokemonId = 0}),
-                new NearbyPokemonWrapper(new NearbyPokemon {PokemonId = 0}),
-                new NearbyPokemonWrapper(new NearbyPokemon {PokemonId = 0})
-            };
+            new ObservableCollection<NearbyPokemonWrapper>();
+
+        /// <summary>
+        ///     Collection of lured Pokemon
+        /// </summary>
+        public static ObservableCollection<LuredPokemon> LuredPokemons { get; set; } = new ObservableCollection<LuredPokemon>();
 
         /// <summary>
         ///     Collection of Pokestops in the current area
@@ -260,8 +267,8 @@ namespace PokemonGo_UWP.Utils
         /// <summary>
         ///     Stores player's current Pokedex
         /// </summary>
-        public static ObservableCollection<PokedexEntry> PokedexInventory { get; set; } =
-            new ObservableCollection<PokedexEntry>();
+        public static ObservableCollectionPlus<PokedexEntry> PokedexInventory { get; set; } =
+            new ObservableCollectionPlus<PokedexEntry>();
 
         /// <summary>
         ///     Stores player's current candies
@@ -291,12 +298,41 @@ namespace PokemonGo_UWP.Utils
 
         #endregion
 
+        #region Constructor
+
+        static GameClient()
+        {
+            PokedexInventory.CollectionChanged += PokedexInventory_CollectionChanged;
+            // TODO: Investigate whether or not this needs to be unsubscribed when the app closes.
+        }
+
+        /// <summary>
+        /// When new items are added to the Pokedex, reset the Nearby Pokemon so their state can be re-run.
+        /// </summary>
+        /// <remarks>
+        /// This exists because the Nearby Pokemon are Map objects, and are loaded before Inventory. If you don't do this,
+        /// the first Nearby items are always shown as "new to the Pokedex" until they disappear, regardless of if they are
+        /// ACTUALLY new.
+        /// </remarks>
+        private static void PokedexInventory_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                // advancedrei: This is a total order-of-operations hack.
+                var nearby = NearbyPokemons.ToList();
+                NearbyPokemons.Clear();
+                NearbyPokemons.AddRange(nearby);
+            }
+        }
+
+        #endregion
+
         #region Game Logic
 
         #region Login/Logout
 
         /// <summary>
-        /// Saves the new AccessToken to settings.        
+        /// Saves the new AccessToken to settings.
         /// </summary>
         private static void SaveAccessToken()
         {
@@ -320,7 +356,7 @@ namespace PokemonGo_UWP.Utils
         public static async Task InitializeClient()
         {
 
-            await DataCache.Init();
+            DataCache.Init();
 
             var credentials = SettingsService.Instance.UserCredentials;
             credentials.RetrievePassword();
@@ -333,10 +369,10 @@ namespace PokemonGo_UWP.Utils
                 GooglePassword = SettingsService.Instance.LastLoginService == AuthType.Google ? credentials.Password : null,
             };
 
-            _client = new Client(_clientSettings, null, DeviceInfos.Instance) {AccessToken = LoadAccessToken()};
+            _client = new Client(_clientSettings, null, DeviceInfos.Current) {AccessToken = LoadAccessToken()};
             var apiFailureStrategy = new ApiFailureStrategy(_client);
             _client.ApiFailure = apiFailureStrategy;
-            // Register to AccessTokenChanged       
+            // Register to AccessTokenChanged
             apiFailureStrategy.OnAccessTokenUpdated += (s, e) => SaveAccessToken();
             try
             {
@@ -349,7 +385,10 @@ namespace PokemonGo_UWP.Utils
                     Debug.WriteLine("AccessTokenExpired Exception caught");
                     await _client.Login.DoLogin();
                 }
-                else throw;
+                else
+                {
+                    await new MessageDialog(e.Message).ShowAsyncQueue();
+                }
             }
         }
 
@@ -367,10 +406,10 @@ namespace PokemonGo_UWP.Utils
                 PtcPassword = password,
                 AuthType = AuthType.Ptc
             };
-            _client = new Client(_clientSettings, null, DeviceInfos.Instance);
+            _client = new Client(_clientSettings, null, DeviceInfos.Current);
             var apiFailureStrategy = new ApiFailureStrategy(_client);
             _client.ApiFailure = apiFailureStrategy;
-            // Register to AccessTokenChanged       
+            // Register to AccessTokenChanged
             apiFailureStrategy.OnAccessTokenUpdated += (s, e) => SaveAccessToken();
             // Get PTC token
             await _client.Login.DoLogin();
@@ -400,10 +439,10 @@ namespace PokemonGo_UWP.Utils
                 AuthType = AuthType.Google
             };
 
-            _client = new Client(_clientSettings, null, DeviceInfos.Instance);
+            _client = new Client(_clientSettings, null, DeviceInfos.Current);
             var apiFailureStrategy = new ApiFailureStrategy(_client);
             _client.ApiFailure = apiFailureStrategy;
-            // Register to AccessTokenChanged       
+            // Register to AccessTokenChanged
             apiFailureStrategy.OnAccessTokenUpdated += (s, e) => SaveAccessToken();
             // Get Google token
             await _client.Login.DoLogin();
@@ -421,69 +460,83 @@ namespace PokemonGo_UWP.Utils
         /// <summary>
         ///     Logs the user out by clearing data and timers
         /// </summary>
-        public static async void DoLogout()
+        public static void DoLogout()
         {
             // Clear stored token
             SettingsService.Instance.AccessTokenString = null;
             if (!SettingsService.Instance.RememberLoginData)
                 SettingsService.Instance.UserCredentials = null;
             _heartbeat?.StopDispatcher();
-            _geolocator.PositionChanged -= GeolocatorOnPositionChanged;
+            if(_geolocator != null)
+                _geolocator.PositionChanged -= GeolocatorOnPositionChanged;
             _geolocator = null;
             _lastGeopositionMapObjectsRequest = null;
-            CatchablePokemons.Clear();
-            NearbyPokemons.Clear();
-            NearbyPokestops.Clear();
+            CatchablePokemons?.Clear();
+            NearbyPokemons?.Clear();
+            NearbyPokestops?.Clear();
         }
 
-        #endregion
+		#endregion
 
-        #region Data Updating
+		#region Data Updating
+		private static Geolocator _geolocator;
+		private static Compass _compass;
 
-        private static Geolocator _geolocator;
-        private static Compass _compass;
+		public static Geoposition Geoposition { get; private set; }
 
-        public static Geoposition Geoposition { get; private set; }
+		private static Heartbeat _heartbeat;
 
-        private static Heartbeat _heartbeat;
-        private static DispatcherTimer _compassTimer;
-
-        /// <summary>
-        ///     We fire this event when the current position changes
-        /// </summary>
-        public static event EventHandler<Geoposition> GeopositionUpdated;
-
-        public static event EventHandler<CompassReading> HeadingUpdated;
-
-        /// <summary>
-        ///     Starts the timer to update map objects and the handler to update position
-        /// </summary>
-        public static async Task InitializeDataUpdate()
-        {
-            if (SettingsService.Instance.IsCompassEnabled)
-            {
-                _compass = Compass.GetDefault();
-                if (_compass != null)
-                {
-                    _compassTimer = new DispatcherTimer
-                    {
-                        Interval = TimeSpan.FromMilliseconds(Math.Max(_compass.MinimumReportInterval, 50))
-                    };
-                    _compassTimer.Tick += (s, e) =>
-                    {
-                        if (SettingsService.Instance.IsAutoRotateMapEnabled)
-                        {
-                            HeadingUpdated?.Invoke(null, _compass.GetCurrentReading());
-                        }
-                    };
-                    _compassTimer.Start();
-                }
-            }
-            _geolocator = new Geolocator
+		/// <summary>
+		///     We fire this event when the current position changes
+		/// </summary>
+		public static event EventHandler<Geoposition> GeopositionUpdated;
+		#region Compass Stuff
+		/// <summary>
+		/// We fire this event when the current compass position changes
+		/// </summary>
+		public static event EventHandler<CompassReading> HeadingUpdated;
+		private static void compass_ReadingChanged(Compass sender, CompassReadingChangedEventArgs args)
+		{
+			HeadingUpdated?.Invoke(sender, args.Reading);
+		}
+		#endregion
+		/// <summary>
+		///     Starts the timer to update map objects and the handler to update position
+		/// </summary>
+		public static async Task InitializeDataUpdate()
+		{
+			#region Compass management
+			SettingsService.Instance.PropertyChanged += (object sender, PropertyChangedEventArgs e) =>
+			{
+				if (e.PropertyName == nameof(SettingsService.Instance.MapAutomaticOrientationMode))
+				{
+					switch (SettingsService.Instance.MapAutomaticOrientationMode)
+					{
+						case MapAutomaticOrientationModes.Compass:
+							_compass = Compass.GetDefault();
+							_compass.ReportInterval = Math.Max(_compass.MinimumReportInterval, 50);
+							_compass.ReadingChanged += compass_ReadingChanged;
+							break;
+						case MapAutomaticOrientationModes.None:
+						case MapAutomaticOrientationModes.GPS:
+						default:
+							if (_compass != null)
+							{
+								_compass.ReadingChanged -= compass_ReadingChanged;
+								_compass = null;
+							}
+							break;
+					}
+				}
+			};
+			//Trick to trigger the PropertyChanged for MapAutomaticOrientationMode ;)
+			SettingsService.Instance.MapAutomaticOrientationMode = SettingsService.Instance.MapAutomaticOrientationMode;
+			#endregion
+			_geolocator = new Geolocator
             {
                 DesiredAccuracy = PositionAccuracy.High,
                 DesiredAccuracyInMeters = 5,
-                ReportInterval = 5000,
+                ReportInterval = 1000,
                 MovementThreshold = 5
             };
 
@@ -550,9 +603,9 @@ namespace PokemonGo_UWP.Utils
             _lastUpdate = DateTime.Now;
 
             // update catchable pokemons
-            var newCatchablePokemons = mapObjects.Item1.MapCells.SelectMany(x => x.CatchablePokemons).ToArray();
+            var newCatchablePokemons = mapObjects.Item1.MapCells.SelectMany(x => x.CatchablePokemons).Select(item => new MapPokemonWrapper(item)).ToArray();
             Logger.Write($"Found {newCatchablePokemons.Length} catchable pokemons");
-            CatchablePokemons.UpdateWith(newCatchablePokemons, x => new MapPokemonWrapper(x),
+            CatchablePokemons.UpdateWith(newCatchablePokemons, x => x,
                 (x, y) => x.EncounterId == y.EncounterId);
 
             // update nearby pokemons
@@ -565,10 +618,14 @@ namespace PokemonGo_UWP.Utils
             var newPokeStops = mapObjects.Item1.MapCells
                 .SelectMany(x => x.Forts)
                 .Where(x => x.Type == FortType.Checkpoint)
-                .ToArray();
+                .ToArray();            
             Logger.Write($"Found {newPokeStops.Length} nearby PokeStops");
             NearbyPokestops.UpdateWith(newPokeStops, x => new FortDataWrapper(x), (x, y) => x.Id == y.Id);
 
+            // Update LuredPokemon
+            var newLuredPokemon = newPokeStops.Where(item => item.LureInfo != null).Select(item => new LuredPokemon(item.LureInfo, item.Latitude, item.Longitude)).ToArray();
+            Logger.Write($"Found {newLuredPokemon.Length} lured Pokemon");
+            LuredPokemons.UpdateByIndexWith(newLuredPokemon, x => x);
             Logger.Write("Finished updating map objects");
         }
 
@@ -590,7 +647,7 @@ namespace PokemonGo_UWP.Utils
                         <GetMapObjectsResponse, GetHatchedEggsResponse, GetInventoryResponse, CheckAwardedBadgesResponse,
                             DownloadSettingsResponse>> GetMapObjects(Geoposition geoposition)
         {
-            _lastGeopositionMapObjectsRequest = geoposition;      
+            _lastGeopositionMapObjectsRequest = geoposition;
             return await _client.Map.GetMapObjects();
         }
 
@@ -641,7 +698,7 @@ namespace PokemonGo_UWP.Utils
                 var levelUpResponse = await GetLevelUpRewards(tmpStats.Level);
                 return levelUpResponse;
             }
-            PlayerStats = tmpStats;            
+            PlayerStats = tmpStats;
             return null;
         }
 
@@ -665,7 +722,6 @@ namespace PokemonGo_UWP.Utils
 
         /// <summary>
         ///     Pokedex extra data doesn't change so we can just call this method once.
-        ///     TODO: store it in local settings maybe?
         /// </summary>
         /// <returns></returns>
         private static async Task UpdateItemTemplates()
@@ -741,7 +797,7 @@ namespace PokemonGo_UWP.Utils
             PokemonsInventory.AddRange(fullInventory.Select(item => item.InventoryItemData.PokemonData)
                 .Where(item => item != null && item.PokemonId > 0), true);
             EggsInventory.AddRange(fullInventory.Select(item => item.InventoryItemData.PokemonData)
-                .Where(item => item != null && item.IsEgg), true);            
+                .Where(item => item != null && item.IsEgg), true);
 
             // Update candies
             CandyInventory.AddRange(from item in fullInventory
@@ -788,6 +844,17 @@ namespace PokemonGo_UWP.Utils
         }
 
         /// <summary>
+        ///     Encounters the selected lured Pokemon
+        /// </summary>
+        /// <param name="encounterId"></param>
+        /// <param name="spawnpointId"></param>
+        /// <returns></returns>
+        public static async Task<DiskEncounterResponse> EncounterLurePokemon(ulong encounterId, string spawnpointId)
+        {
+            return await _client.Encounter.EncounterLurePokemon(encounterId, spawnpointId);
+        }
+
+        /// <summary>
         ///     Executes Pokemon catching
         /// </summary>
         /// <param name="encounterId"></param>
@@ -820,7 +887,7 @@ namespace PokemonGo_UWP.Utils
 
         #endregion
 
-        #region Power Up & Evolving & Transfer
+        #region Power Up & Evolving & Transfer & Favorite
 
         /// <summary>
         ///
@@ -850,6 +917,19 @@ namespace PokemonGo_UWP.Utils
         public static async Task<ReleasePokemonResponse> TransferPokemon(ulong pokemonId)
         {
             return await _client.Inventory.TransferPokemon(pokemonId);
+        }
+
+        /// <summary>
+        /// Favourites/Unfavourites the Pokemon
+        /// </summary>
+        /// <param name="pokemonId"></param>
+        /// <param name="isFavorite"></param>
+        /// <returns></returns>
+        public static async Task<SetFavoritePokemonResponse> SetFavoritePokemon(ulong pokemonId, bool isFavorite)
+        {
+            // Cast ulong to long... because Niantic is a bunch of retarded idiots...
+            long pokeId = (long)pokemonId;
+            return await _client.Inventory.SetFavoritePokemon(pokeId, isFavorite);
         }
 
         #endregion
