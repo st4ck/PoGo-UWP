@@ -614,9 +614,9 @@ namespace PokemonGo_UWP.Utils
 
     private int width = 0;
     private int height = 0;
-    private Geopoint playerPos;
+//    private Geopoint playerPos;
 
-    Geolocator geo = new Geolocator();
+//    Geolocator geo = new Geolocator();
     public CompassHelper compass = new CompassHelper();
 
     public ARManager(int pixelWidth, int pixelHeight, bool isOpaque)
@@ -629,34 +629,34 @@ namespace PokemonGo_UWP.Utils
     public async Task Initialize(CaptureElement element)
     {
       await initVideo(element);
-      initGeo();
+//      initGeo();
       initDX();
     }
 
-    #region Geo Position
-    Timer geoTimer;
-    private void initGeo()
-    {
-      geoTimer = new Timer(onGeoTimer, null, 0, Timeout.Infinite);
-    }
-
-    private void BeginGeo()
-    {
-      if (mIsActive) geoTimer.Change(1000, Timeout.Infinite);
-    }
-
-    private async void onGeoTimer(Object state)
-    {
-      try
-      {
-        Geoposition pos = await geo.GetGeopositionAsync();
-        playerPos = pos.Coordinate.Point;
-        PokemonGo.RocketAPI.Logger.Write($"player at {playerPos.Position.Latitude} {playerPos.Position.Longitude}");
-      }
-      catch { }
-      BeginGeo();
-    }
-    #endregion
+//    #region Geo Position
+//    Timer geoTimer;
+//    private void initGeo()
+//    {
+//      geoTimer = new Timer(onGeoTimer, null, 0, Timeout.Infinite);
+//    }
+//
+//    private void BeginGeo()
+//    {
+//      if (mIsActive) geoTimer.Change(1000, Timeout.Infinite);
+//    }
+//
+//    private async void onGeoTimer(Object state)
+//    {
+//      try
+//      {
+//        Geoposition pos = await geo.GetGeopositionAsync();
+//        playerPos = pos.Coordinate.Point;
+//        PokemonGo.RocketAPI.Logger.Write($"player at {playerPos.Position.Latitude} {playerPos.Position.Longitude}");
+//      }
+//      catch { }
+//      BeginGeo();
+//    }
+//    #endregion
 
     #region Camera Stream
     private async Task initVideo(CaptureElement element)
@@ -703,7 +703,7 @@ namespace PokemonGo_UWP.Utils
       await mMediaCapture.StartPreviewAsync();
       mIsActive = true;
       compass.Reset = true;
-      BeginGeo();
+      //BeginGeo();
     }
 
     public async Task StopVideoStream()
@@ -886,7 +886,9 @@ namespace PokemonGo_UWP.Utils
       guy.data = renderMan.CreateBuffer<ModelBuffer>("model");
       renderMan.GetAsset<mxTexture>("pokestop", ref tex);
       guy.AttachTexture(tex);
+
       mon = new arPokemon();
+      mon.geo = p.Geoposition;
       mon.id = fixedid++;
       mon.instance = guy;
       float X = GetDistanceTo(p.Geoposition, GetDistanceType.Long);
@@ -932,10 +934,10 @@ namespace PokemonGo_UWP.Utils
 
     private float GetDistanceTo(Geopoint point, GetDistanceType type)
     {
-      double lat1 = (type == GetDistanceType.Long) ? playerPos.Position.Latitude : point.Position.Latitude;
-      double lon2 = (type == GetDistanceType.Lat) ? playerPos.Position.Longitude : point.Position.Longitude;
-      double lat2 = playerPos.Position.Latitude;
-      double lon1 = playerPos.Position.Longitude;
+      double lat2 = GameClient.Geoposition.Coordinate.Point.Position.Latitude;
+      double lon1 = GameClient.Geoposition.Coordinate.Point.Position.Longitude;
+      double lat1 = (type == GetDistanceType.Long) ? lat2 : point.Position.Latitude;
+      double lon2 = (type == GetDistanceType.Lat) ? lon1 : point.Position.Longitude;
       double R = 6378.137; // Radius of earth in KM
       double dLat = (lat2 - lat1) * Math.PI / 180;
       double dLon = (lon2 - lon1) * Math.PI / 180;
@@ -992,9 +994,10 @@ namespace PokemonGo_UWP.Utils
         FixPokething(p);
       foreach (var p in pokestops.Values)
         FixPokething(p);
-      foreach (var p in testGuys)
-        FixPokething(p);
+//      foreach (var p in testGuys)
+//        FixPokething(p);
     }
+
 
     private void FixPokething(arPokemon p)
     {
@@ -1003,7 +1006,6 @@ namespace PokemonGo_UWP.Utils
       {
         p.position.X = GetDistanceTo(p.geo, GetDistanceType.Long);
         p.position.Z = GetDistanceTo(p.geo, GetDistanceType.Lat);
-//        PokemonGo.RocketAPI.Logger.Write($"moving p {p.id} at {p.position.X}, {p.position.Z}");
       }
       // get new orientation to face origin
       Vector3 loc = p.position;
