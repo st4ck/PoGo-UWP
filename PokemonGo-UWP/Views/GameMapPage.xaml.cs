@@ -5,6 +5,8 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,6 +15,7 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Media;
 using PokemonGo_UWP.Utils;
 using Windows.Devices.Sensors;
+using Template10.Common;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -26,6 +29,7 @@ namespace PokemonGo_UWP.Views
         private readonly object lockObject = new object();
         private int _mapBoxIndex = -1;
         private Geopoint lastAutoPosition;
+        private Button ReactivateMapAutoUpdateButton;
 
         public GameMapPage()
         {
@@ -39,7 +43,6 @@ namespace PokemonGo_UWP.Views
                   HideNearbyModalAnimation.To = NearbyPokemonModal.ActualHeight;
               HideNearbyModalAnimation.Completed += (ss, ee) => { NearbyPokemonModal.IsModal = false; };
 
-              ReactivateMapAutoUpdate.Visibility = Visibility.Collapsed;
               arStateImage.Source = imageAROff;
               if (arManager == null)
               {
@@ -49,6 +52,35 @@ namespace PokemonGo_UWP.Views
                 arCamera.Visibility = Visibility.Collapsed;
                 arRender.Visibility = Visibility.Collapsed;
               }
+
+                // Add reactivate map update button
+                if (ReactivateMapAutoUpdateButton != null) return;
+                ReactivateMapAutoUpdateButton = new Button
+                {
+                    Visibility = Visibility.Collapsed,
+                    Style = (Style) BootStrapper.Current.Resources["ImageButtonStyle"],
+                    Height = 44,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0,8,0,0),
+                    Content = new Image()
+                    {
+                        Source = new BitmapImage() { UriSource = new Uri("ms-appx:///Assets/Icons/RecenterMapIcon.png") },
+                        Stretch = Stretch.Uniform,
+                        Height = 36,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment                        = VerticalAlignment.Center
+                    }
+                };
+                ReactivateMapAutoUpdateButton.Tapped += ReactivateMapAutoUpdate_Tapped;
+
+                var tsp = (StackPanel)
+                    VisualTreeHelper.GetChild(
+                        VisualTreeHelper.GetChild(
+                            VisualTreeHelper.GetChild(VisualTreeHelper.GetChild(GameMapControl, 0), 1), 0), 0);   
+                
+                tsp.Children.Add(ReactivateMapAutoUpdateButton);             
+
             };
         }
 
@@ -206,7 +238,7 @@ namespace PokemonGo_UWP.Views
                     if (currentCoord == previousCoord)
                     {
                         //Previous position was set automatically, continue!
-                        ReactivateMapAutoUpdate.Visibility = Visibility.Collapsed;
+                        ReactivateMapAutoUpdateButton.Visibility = Visibility.Collapsed;
                         GameMapControl.Center = position.Coordinate.Point;
                         lastAutoPosition = GameMapControl.Center;
 
@@ -330,7 +362,7 @@ namespace PokemonGo_UWP.Views
         {
             if (args.ChangeReason == MapCameraChangeReason.UserInteraction && lastAutoPosition != null)
             {
-                ReactivateMapAutoUpdate.Visibility = Visibility.Visible;
+                ReactivateMapAutoUpdateButton.Visibility = Visibility.Visible;
             }
         }
 
