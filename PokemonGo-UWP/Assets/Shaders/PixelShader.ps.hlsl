@@ -8,5 +8,7 @@ struct PixelShaderInput
 
 float4 main(PixelShaderInput input) : SV_TARGET
 {
-    return pokemon.Sample(pokemonSampler, input.tex);
+    float4 ret = pokemon.Sample(pokemonSampler, input.tex);
+    clip(ret.a < 0.1f ? -1 : 1);
+    return ret;
 }
