@@ -1,9 +1,9 @@
 # Important information
-You can find the installation file for PoGo in [Releases](https://github.com/ST-Apps/PoGo-UWP/releases/tag/v1.1.0-rc1). **Please read the whole release information before installing.**
+You can find the installation file for PoGo in [Releases](https://github.com/ST-Apps/PoGo-UWP/releases/). **Please read the whole release information before installing.**
 
 # PoGo for Windows 10
 
-Check [Wiki](https://github.com/ST-Apps/PoGo-UWP/wiki) for information about the project, installing instructions and more.
+Check [Wiki](https://github.com/ST-Apps/PoGo-UWP/wiki) for information about the project, installing instructions and more in different language.
 
 # Social
 
@@ -62,7 +62,7 @@ A: Press the Pokeball and hit the "LOGOUT" button in the top right corner.
 
 # Changelog
 
-**From 14/08/2016 changelog will be kept in [Releases](https://github.com/ST-Apps/PoGo-UWP/releases/tag/v1.1.0-rc1) in each release.**
+**From 14/08/2016 changelog will be kept in [Releases](https://github.com/ST-Apps/PoGo-UWP/releases/) in each release.**
 
 ## (01/08/2016) [v 1.0.12.0-beta] - Bug fixes and improvements
 * Fixed crash when tapping on Pokebal menu

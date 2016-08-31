@@ -204,6 +204,22 @@
                 </DiscreteObjectKeyFrame>
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
+        <Storyboard x:Name="ShowBatterySaver">
+            <DoubleAnimation
+                Storyboard.TargetName="GamePanel"
+                Storyboard.TargetProperty="Opacity"
+                From="1"
+                To="0"
+                Duration="0:0:0.2" />
+        </Storyboard>
+        <Storyboard x:Name="HideBatterySaver">
+            <DoubleAnimation
+                Storyboard.TargetName="GamePanel"
+                Storyboard.TargetProperty="Opacity"
+                From="0"
+                To="1"
+                Duration="0:0:0.2" />
+        </Storyboard>
 
         <Storyboard x:Name="ShowNearbyModalStoryboard">
             <DoubleAnimation x:Name="ShowNearbyModalAnimation"
@@ -229,11 +245,14 @@
 
     </Page.Resources>
 
-    <RelativePanel>
+    <Grid>
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Black">
+            <Image Source="../Assets/UI/logoDark.png" MaxWidth="180" MaxHeight="180" Opacity=".2" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </StackPanel>
       <CaptureElement x:Name="arCamera" Stretch="UniformToFill" Canvas.ZIndex="1"/>
       <Image x:Name="arRender" Stretch="Uniform" HorizontalAlignment="Stretch" Canvas.ZIndex="2" Width="{Binding Width, ElementName=arRender}" Height="{Binding Height, ElementName=arRender}" />
-
-        <maps:MapControl BusinessLandmarksVisible="False"
+        <RelativePanel Name="GamePanel" Grid.Row="0">
+            <maps:MapControl BusinessLandmarksVisible="False"
                          TargetCameraChanged="GameMapControl_TargetCameraChanged"
                          LandmarksVisible="False"
                          ColorScheme="{ThemeResource MapColorScheme}"
@@ -272,6 +291,23 @@
                                 Stretch="Uniform"
                                 Height="{Binding ZoomLevel, ElementName=GameMapControl, Converter={StaticResource MapZoomLevelToIconSizeConverter}, ConverterParameter=2}"
                                 Width="{Binding ZoomLevel, ElementName=GameMapControl, Converter={StaticResource MapZoomLevelToIconSizeConverter}, ConverterParameter=2}" />
+                        </Button>
+                    </DataTemplate>
+                </maps:MapItemsControl.ItemTemplate>
+            </maps:MapItemsControl>
+
+            <maps:MapItemsControl ItemsSource="{Binding NearbyGyms}">
+                <maps:MapItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="entities:FortDataWrapper">
+                        <Button Style="{ThemeResource ImageButtonStyle}"
+                                Command="{x:Bind TryEnterGym}">
+                            <Image
+                                Source="{Binding OwnedByTeam, Converter={StaticResource GymToIconConverter}}"
+                                maps:MapControl.Location="{Binding Geoposition}"
+                                maps:MapControl.NormalizedAnchorPoint="{Binding Anchor}"
+                                Stretch="Uniform"
+                                Height="{Binding ZoomLevel, ElementName=GameMapControl, Converter={StaticResource MapZoomLevelToIconSizeConverter}, ConverterParameter=4}"
+                                Width="{Binding ZoomLevel, ElementName=GameMapControl, Converter={StaticResource MapZoomLevelToIconSizeConverter}, ConverterParameter=4}" />
                         </Button>
                     </DataTemplate>
                 </maps:MapItemsControl.ItemTemplate>
@@ -820,4 +856,5 @@
       </interactivity:Interaction.Behaviors>
     </Button>
     </RelativePanel>
+    </Grid>
 </Page>

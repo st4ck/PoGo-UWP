@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using POGOProtos.Networking.Envelopes;
+using PokemonGo.RocketAPI;
+using PokemonGo.RocketAPI.Exceptions;
+using PokemonGoAPI.Enums;
+using PokemonGoAPI.Interfaces;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using PokemonGo.RocketAPI;
-using PokemonGo.RocketAPI.Enums;
-using PokemonGo.RocketAPI.Extensions;
-using POGOProtos.Networking.Envelopes;
 
 namespace PokemonGoAPI.Session
 {
@@ -17,12 +15,14 @@ namespace PokemonGoAPI.Session
 
         private Client _client;
 
-        private const int MaxRetries = 50;
+        private const int MaxRetries = 25;
 
         private int _retryCount;
 
         public event EventHandler OnAccessTokenUpdated;
-        
+
+        public event Action<bool> OnFailureToggleUpdateTimer;
+
         public ApiFailureStrategy(Client client)
         {
             _client = client;
@@ -35,7 +35,7 @@ namespace PokemonGoAPI.Session
         /// <summary>
         ///     Ensures the <see cref="Session" /> gets reauthenticated, no matter how long it takes.
         /// </summary>
-        private async Task Reauthenticate()
+        internal async Task Reauthenticate()
         {
             ReauthenticateMutex.WaitOne();
             if (_client.AccessToken.IsExpired)
@@ -45,7 +45,7 @@ namespace PokemonGoAPI.Session
                 while (_client.AccessToken == null)
                 {
                     try
-                    {                        
+                    {
                         await _client.Login.DoLogin();
                     }
                     catch (Exception exception)
@@ -61,7 +61,7 @@ namespace PokemonGoAPI.Session
                             await Task.Delay(sleepSeconds * 1000);
                         }
                     }
-                }                
+                }
                 OnAccessTokenUpdated?.Invoke(this, null);
             }
             ReauthenticateMutex.ReleaseMutex();
@@ -74,20 +74,28 @@ namespace PokemonGoAPI.Session
         public async Task<ApiOperation> HandleApiFailure(string[] url, RequestEnvelope request, ResponseEnvelope response)
         {
             if (_retryCount == MaxRetries)
-                // We failed, let's abort
-                return ApiOperation.Abort;
-
-            switch (response.StatusCode)
             {
-                case 1:
+                // We failed, let's abort
+                Logger.Write("Request aborted, retryCount: " + _retryCount);
+                return ApiOperation.Abort;
+            }
+
+            StatusCode status = (StatusCode)response.StatusCode;
+
+            switch (status)
+            {
+                case StatusCode.Success:
                     // Success!?
                     break;
-                case 52:
+                case StatusCode.AccessDenied:
+                    // Ban?
+                    throw new AccountLockedException();
+                case StatusCode.ServerOverloaded:
                     // Slow servers?
                     Logger.Write("Server may be slow, let's wait a little bit");
-                    await Task.Delay(2000);
+                    await Task.Delay(11000);
                     break;
-                case 53:
+                case StatusCode.Redirect:
                     // New RPC url
                     if (!Regex.IsMatch(response.ApiUrl, "pgorelease\\.nianticlabs\\.com\\/plfe\\/\\d+"))
                     {
@@ -98,13 +106,15 @@ namespace PokemonGoAPI.Session
                     url[0] = _client.ApiUrl;
                     Logger.Write($"Received an updated API url = {_client.ApiUrl}");
                     break;
-                case 102:
+                case StatusCode.InvalidToken:
                     // Invalid auth
                     Logger.Write("Received StatusCode 102, reauthenticating.");
-                    _client.AccessToken.Expire();
+                    OnFailureToggleUpdateTimer?.Invoke(false);
+                    _client.AccessToken?.Expire();
                     await Reauthenticate();
                     request.AuthTicket = _client.AuthTicket;
-                    break;
+                    OnFailureToggleUpdateTimer?.Invoke(true);
+                    throw new ApiNonRecoverableException("Relogin completed.");
                 default:
                     Logger.Write($"Unknown status code: {response.StatusCode}");
                     break;
@@ -123,7 +133,7 @@ namespace PokemonGoAPI.Session
             _retryCount = 0;
             // Check if we got an updated ticket
             if (response.AuthTicket == null) return;
-            // Update the new token               
+            // Update the new token
             _client.AccessToken.AuthTicket = response.AuthTicket;
             OnAccessTokenUpdated?.Invoke(this, null);
             Logger.Write("Received a new AuthTicket from Pokémon!");

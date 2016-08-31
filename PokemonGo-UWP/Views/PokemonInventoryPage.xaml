@@ -98,22 +98,8 @@
 
     </Page.Resources>
 
-    <Grid>
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#b3ee9a" Offset="0" />
-                <GradientStop Color="#43bab6" Offset="0.8" />
-            </LinearGradientBrush>
-        </Grid.Background>
-
-        <Grid x:Name="SortMenuPanel" Opacity="0" Canvas.ZIndex="0">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#b3ee9a" Offset="0" />
-                    <GradientStop Color="#43bab6" Offset="0.8" />
-                </LinearGradientBrush>
-            </Grid.Background>
-
+    <Grid Background="{StaticResource PageBackgroundGradient}">
+        <Grid x:Name="SortMenuPanel" Opacity="0" Canvas.ZIndex="0" Background="{StaticResource PageBackgroundGradient}">
             <ListView ItemsSource="{Binding Converter={StaticResource PokemonSortingModesToSortingModesListConverter}}"
                       SelectedItem="{Binding CurrentPokemonSortingMode, Mode=TwoWay}"
                       IsItemClickEnabled="True"
@@ -306,7 +292,7 @@
                                        Height="48"
                                        Margin="5"
                                        x:Phase="2" />
-                                <TextBlock Text="{x:Bind PokemonId, Converter={StaticResource PokemonIdToPokemonNameConverter}}"
+                                <TextBlock Text="{x:Bind Name}"
                                            Style="{StaticResource TextPokemonName}"
                                            x:Phase="0" />
                                 <ProgressBar Value="{x:Bind Stamina}"

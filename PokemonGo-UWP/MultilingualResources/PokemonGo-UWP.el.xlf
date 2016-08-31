@@ -104,7 +104,7 @@
         </trans-unit>
         <trans-unit id="Psychic" translate="yes" xml:space="preserve">
           <source>Psychic</source>
-          <target state="new">Psychic</target>
+          <target state="final">Ψυχικός</target>
         </trans-unit>
         <trans-unit id="Rock" translate="yes" xml:space="preserve">
           <source>Hiker</source>
@@ -281,8 +281,10 @@
           <target state="final">Αποτυχία σύνδεσης, παρακαλώ δοκιμάστε ξανά.</target>
         </trans-unit>
         <trans-unit id="NoText" translate="yes" xml:space="preserve">
-          <source>No</source>
-          <target state="final">Όχι</target>
+          <source>NO</source>
+          <target state="needs-review-translation">Όχι</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
+          <note from="MultilingualBuild" annotates="source" priority="2">Capslock</note>
         </trans-unit>
         <trans-unit id="NoGpsPermissionsText" translate="yes" xml:space="preserve">
           <source>We need GPS permissions to run the game, please enable it and try again.</source>
@@ -329,8 +331,10 @@ Open page with installation files for manual install?</source>
           <target state="final">Λάθος Όνομα-Χρήστη/Κωδικός ή offline server, παρακαλώ δοκιμάστε ξανά.</target>
         </trans-unit>
         <trans-unit id="YesText" translate="yes" xml:space="preserve">
-          <source>Yes</source>
-          <target state="final">Ναί</target>
+          <source>YES</source>
+          <target state="needs-review-translation">Ναί</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
+          <note from="MultilingualBuild" annotates="source" priority="2">Capslock</note>
         </trans-unit>
         <trans-unit id="InstinctTeamText" translate="yes" xml:space="preserve">
           <source>Instinct</source>
@@ -353,8 +357,9 @@ Open page with installation files for manual install?</source>
           <target state="final">Η Μεταφορά έγινε επιτυχός! Πήρες {0} Candy απο τον Καθηγητή</target>
         </trans-unit>
         <trans-unit id="TransferPokemonWarningText" translate="yes" xml:space="preserve">
-          <source>You can't take it back after it's transferred to the Professor. Do you really want to transfer {0} to the Professor?</source>
-          <target state="final">Δέν μπορείς να το πάρεις πίσο μετα την μεταφορά στον Καθηγητή. Θέλεις σίγουρα να μεταφέρεις το {0} στον Καθηγητή;</target>
+          <source>You can't take it back after it's transferred to the Professor.</source>
+          <target state="needs-review-translation">Δέν μπορείς να το πάρεις πίσο μετα την μεταφορά στον Καθηγητή. Θέλεις σίγουρα να μεταφέρεις το {0} στον Καθηγητή;</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
         </trans-unit>
         <trans-unit id="LoginExpired" translate="yes" xml:space="preserve">
           <source>Previous login expired.</source>
@@ -489,8 +494,40 @@ Open page with installation files for manual install?</source>
           <target state="new">Waiting for network to be back...</target>
         </trans-unit>
         <trans-unit id="EggHatchMessage" translate="yes" xml:space="preserve">
-          <source>An Egg hatched into a {0}.\nYou also got {1} Stardust, {2} Cany and {3} XP.</source>
-          <target state="new">An Egg hatched into a {0}.\nYou also got {1} Stardust, {2} Cany and {3} XP.</target>
+          <source>An Egg hatched into a {0}.
+You also got {1} Stardust, {2} Candy and {3} XP.</source>
+          <target state="new">An Egg hatched into a {0}.
+You also got {1} Stardust, {2} Candy and {3} XP.</target>
+        </trans-unit>
+        <trans-unit id="EvolvePokemonWarningText" translate="yes" xml:space="preserve">
+          <source>Do you want to evolve {0}?</source>
+          <target state="new">Do you want to evolve {0}?</target>
+        </trans-unit>
+        <trans-unit id="PowerUpPokemonWarningText" translate="yes" xml:space="preserve">
+          <source>Do you want to use a power up for {0}?</source>
+          <target state="new">Do you want to use a power up for {0}?</target>
+        </trans-unit>
+        <trans-unit id="TransferPokemonWarningTitle" translate="yes" xml:space="preserve">
+          <source>Do you really want to transfer {0} to the Professor?</source>
+          <target state="new">Do you really want to transfer {0} to the Professor?</target>
+        </trans-unit>
+        <trans-unit id="CancelText" translate="yes" xml:space="preserve">
+          <source>CANCEL</source>
+          <target state="new">CANCEL</target>
+          <note from="MultilingualBuild" annotates="source" priority="2">Capslock</note>
+        </trans-unit>
+        <trans-unit id="ItemDiscardWarningText" translate="yes" xml:space="preserve">
+          <source>Discard {0}?</source>
+          <target state="new">Discard {0}?</target>
+        </trans-unit>
+        <trans-unit id="SetNickName" translate="yes" xml:space="preserve">
+          <source>Set Nickname</source>
+          <target state="new">Set Nickname</target>
+        </trans-unit>
+        <trans-unit id="OkText" translate="yes" xml:space="preserve">
+          <source>O. K.</source>
+          <target state="new">O. K.</target>
+          <note from="MultilingualBuild" annotates="source" priority="2">Space between . and K</note>
         </trans-unit>
       </group>
     </body>
@@ -697,7 +734,7 @@ Open page with installation files for manual install?</source>
         </trans-unit>
         <trans-unit id="PokedexText.Text" translate="yes" xml:space="preserve">
           <source>POKÉDEX</source>
-          <target state="new">POKÉDEX</target>
+          <target state="final">POKÉDEX</target>
         </trans-unit>
         <trans-unit id="PokedexViewCaught.Text" translate="yes" xml:space="preserve">
           <source>Caught</source>
@@ -743,6 +780,11 @@ Open page with installation files for manual install?</source>
           <source>FAVORITE</source>
           <target state="new">FAVORITE</target>
         </trans-unit>
+        <trans-unit id="AppraiseTextBlock.Text" translate="yes" xml:space="preserve">
+          <source>APPRAISE</source>
+          <target state="new">APPRAISE</target>
+          <note from="MultilingualBuild" annotates="source" priority="2">Capslock</note>
+        </trans-unit>
       </group>
     </body>
   </file>
@@ -753,8 +795,9 @@ Open page with installation files for manual install?</source>
     <body>
       <group id="POKEMONGO-UWP/STRINGS/EN-US/ITEMS.RESW" datatype="resx">
         <trans-unit id="D_ItemGreatBall" translate="yes" xml:space="preserve">
-          <source>A device for capturing wild Pokémon. It's thrown like a ball at a wild Pokémon, comfortably encapsulating its target.</source>
-          <target state="final">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο της.</target>
+          <source>A good, high-performance Poké Ball that provides a higher catch rate than a standard Poké Ball.</source>
+          <target state="needs-review-translation">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο της.</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
         </trans-unit>
         <trans-unit id="D_ItemIncenseCool" translate="yes" xml:space="preserve">
           <source>Incense with a mysterious fragrance that lures wild Pokémon to your location for 30 minutes</source>
@@ -783,8 +826,9 @@ Open page with installation files for manual install?</source>
           <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
         </trans-unit>
         <trans-unit id="D_ItemMasterBall" translate="yes" xml:space="preserve">
-          <source>A device for capturing wild Pokémon. It's thrown like a ball at a wild Pokémon, comfortably encapsulating its target.</source>
-          <target state="final">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο του.</target>
+          <source>The best Poké Ball with the ultimate level of performance. With it you will catch any Pokémon without fail.</source>
+          <target state="needs-review-translation">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο του.</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
         </trans-unit>
         <trans-unit id="D_ItemPokeBall" translate="yes" xml:space="preserve">
           <source>A device for capturing wild Pokémon. It's thrown like a ball at a wild Pokémon, comfortably encapsulating its target.</source>
@@ -799,8 +843,9 @@ Open page with installation files for manual install?</source>
           <target state="final">Ένα φάρμακο το οποίο επαναφέρει λιπόθυμα Πόκεμον. Επίσης επαναφέρει το μισό απο το μέγιστο HP ενός λιπόθυμου Πόκεμον.</target>
         </trans-unit>
         <trans-unit id="D_ItemUltraBall" translate="yes" xml:space="preserve">
-          <source>A device for capturing wild Pokémon. It's thrown like a ball at a wild Pokémon, comfortably encapsulating its target.</source>
-          <target state="final">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο του.</target>
+          <source>An ultra-high performance Poké Ball that provides a higher success rate for catching Pokémon than a Great.</source>
+          <target state="needs-review-translation">Μία συσκευή για να πίανεις άγρια πόκεμον. Την πετάς σάν μπάλα σε ένα άγριο πόκεμον και με άνεση πίανει τον στόχο του.</target>
+          <note from="MultilingualUpdate" annotates="source" priority="2">Please verify the translation’s accuracy as the source string was updated after it was translated.</note>
         </trans-unit>
         <trans-unit id="ItemBlukBerry" translate="yes" xml:space="preserve">
           <source>Bluk Berry</source>
@@ -947,6 +992,22 @@ Open page with installation files for manual install?</source>
         <trans-unit id="D_ItemUnknown" translate="yes" xml:space="preserve">
           <source>This item is unknown and may be added in the future.</source>
           <target state="new">This item is unknown and may be added in the future.</target>
+        </trans-unit>
+        <trans-unit id="D_ItemBlukBerry" translate="yes" xml:space="preserve">
+          <source>Feed this to a Pokémon, and it will be easier to catch on your next throw.</source>
+          <target state="new">Feed this to a Pokémon, and it will be easier to catch on your next throw.</target>
+        </trans-unit>
+        <trans-unit id="D_ItemNanabBerry" translate="yes" xml:space="preserve">
+          <source>Feed this to a Pokémon, and it will be easier to catch on your next throw.</source>
+          <target state="new">Feed this to a Pokémon, and it will be easier to catch on your next throw.</target>
+        </trans-unit>
+        <trans-unit id="D_ItemPinapBerry" translate="yes" xml:space="preserve">
+          <source>Feed this to a Pokémon, and it will be easier to catch on your next throw.</source>
+          <target state="new">Feed this to a Pokémon, and it will be easier to catch on your next throw.</target>
+        </trans-unit>
+        <trans-unit id="D_ItemWeparBerry" translate="yes" xml:space="preserve">
+          <source>Feed this to a Pokémon, and it will be easier to catch on your next throw.</source>
+          <target state="new">Feed this to a Pokémon, and it will be easier to catch on your next throw.</target>
         </trans-unit>
       </group>
     </body>

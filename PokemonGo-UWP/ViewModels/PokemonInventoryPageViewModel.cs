@@ -27,7 +27,7 @@ namespace PokemonGo_UWP.ViewModels
 
         public int LastVisibleIndex
         {
-            get { return Utilities.EnsureRange(_lastVisibleIndex, 0, PokemonInventory.Count); }
+            get { return Utilities.EnsureRange(_lastVisibleIndex, 0, PokemonInventory.Count-1); }
             set { _lastVisibleIndex = value; }
         }
 
@@ -208,7 +208,7 @@ namespace PokemonGo_UWP.ViewModels
                     return pokemonInventory.OrderByDescending(pokemon => pokemon.Stamina)
                         .ThenByDescending(pokemon => pokemon.Cp);
                 case PokemonSortingModes.Name:
-                    return pokemonInventory.OrderBy(pokemon => Resources.Pokemon.GetString(pokemon.PokemonId.ToString()))
+                    return pokemonInventory.OrderBy(pokemon =>pokemon.Name)
                             .ThenByDescending(pokemon => pokemon.Cp);
                 case PokemonSortingModes.Combat:
                     return pokemonInventory.OrderByDescending(pokemon => pokemon.Cp)
