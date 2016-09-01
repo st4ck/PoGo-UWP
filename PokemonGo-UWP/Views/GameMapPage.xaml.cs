@@ -13,10 +13,7 @@ using Windows.UI.Xaml.Navigation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PokemonGo.RocketAPI;
-using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Media;
 using PokemonGo_UWP.Utils;
-using Windows.Devices.Sensors;
 using Template10.Common;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
