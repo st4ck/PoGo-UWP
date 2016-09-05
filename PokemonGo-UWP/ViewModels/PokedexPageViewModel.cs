@@ -124,6 +124,9 @@ namespace PokemonGo_UWP.ViewModels
             (_openPokedexEntry = new DelegateCommand<KeyValuePair<PokemonId, PokedexEntry>>(
                 (x) =>
                 {
+                    // Check if Pokemon was never seen
+                    if (x.Value == null) return;
+
                     NavigationService.Navigate(typeof(PokedexDetailPage), x.Key);
                 },
                     (x) => true)
